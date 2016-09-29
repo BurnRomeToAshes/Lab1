@@ -1,101 +1,107 @@
 #include <SFML/Graphics.hpp>
 #include "TransformNode.h"
 
+
+#define bodyScale 4
+#define bodyX 10.0f
+#define bodyY 60.0f
+
+using namespace sf;
+
+
+
 int main(int argc, char* argv) 
 {
-  sf::RenderWindow window(sf::VideoMode(600, 600), "Purple");
+  RenderWindow window(VideoMode(600, 600), "Lab1");
   
-  sf::CircleShape triangle(10, 3);
-  sf::RectangleShape lowerArmRect(sf::Vector2<float>(15.0f, 5.0f));
-  sf::RectangleShape upperArmRect(sf::Vector2<float>(15.0f, 5.0f));
+  RectangleShape rightSholderRect(Vector2<float>(20.0f, 5.0f));
+  RectangleShape rightElbowRect(Vector2<float>(20.0f, 5.0f));
+  RectangleShape leftSholderRect(Vector2<float>(20.0f, 5.0f));
+  RectangleShape leftElbowRect(Vector2<float>(20.0f, 5.0f));
+  RectangleShape bodyRect(Vector2<float>(bodyX, bodyY));
+  RectangleShape neckRect(Vector2<float>(2.5f, 15.0f));
+  CircleShape headCirc(5.0f);
 
-  triangle.setFillColor(sf::Color::Magenta);
-  lowerArmRect.setFillColor(sf::Color::Blue);
-  upperArmRect.setFillColor(sf::Color::Red);
+  bodyRect.setFillColor(Color::White);
+  rightSholderRect.setFillColor(Color::Red);
+  rightElbowRect.setFillColor(Color::Magenta);
+  leftSholderRect.setFillColor(Color::Yellow);
+  leftElbowRect.setFillColor(Color::Green);
+  neckRect.setFillColor(Color::Blue);
+  headCirc.setFillColor(Color::Cyan);
 
-  bool keyHeld = false;
+  // TODO: add defines for constants
+  bodyRect.setOrigin(5.0f, 60.0f);
+  bodyRect.setPosition(300 - bodyX * bodyScale / 2 + 20, 600 - bodyY * bodyScale + 60 * bodyScale); // Calculate the center of the X-axis.
+  bodyRect.setScale(bodyScale, bodyScale);
 
-  bool growing = true;
-  float scaleFactor = 1.001;
+  neckRect.setOrigin(1.75f, 15.0f);
+  neckRect.setPosition(5.0f, 0.0f);
 
-  float growthFactor = 1.001f;
-  float shrinkFactor = 0.999f;
+  rightSholderRect.setPosition(10, 0);
 
-  //triangle.setOrigin(10, 10);
-  triangle.setOrigin(20.0f, 20.0f);
-  triangle.setPosition(300, 300);
-  triangle.setScale(4, 4);
+  leftSholderRect.setOrigin(20.0f, 0.0f);
+  
+  leftElbowRect.setOrigin(20.0f,5.0f);
+  leftElbowRect.setPosition(0.0f,5.0f);
 
-  sf::Vector2<float> armPosition((triangle.getLocalBounds().width / 1.75f), (triangle.getLocalBounds().height / 1.5f));
-  sf::Vector2<float> armOrigin(0.0f, 2.5f);
+  rightElbowRect.setOrigin(0.0f, 5.0f);
+  rightElbowRect.setPosition(20.0f, 5.0f);
 
-  upperArmRect.setOrigin(armOrigin);
-  lowerArmRect.setOrigin(armOrigin);
+  headCirc.setPosition(-2.0f, -2.5f);
 
-  lowerArmRect.setPosition(15.0f, 2.5f);
-  upperArmRect.setPosition(armPosition);
+  TransformNode body(&bodyRect);
+  TransformNode rightSholder(&rightSholderRect);
+  TransformNode leftSholder(&leftSholderRect);
+  TransformNode leftElbow(&leftElbowRect);
+  TransformNode neck(&neckRect);
+  TransformNode rightElbow(&rightElbowRect);
+  TransformNode head(&headCirc);
 
-  TransformNode head(&triangle);
-  TransformNode upperArm(&upperArmRect);
-  TransformNode lowerArm(&lowerArmRect);
+  body.AddChild(&rightSholder);
+  body.AddChild(&leftSholder);
+  body.AddChild(&neck);
+  leftSholder.AddChild(&leftElbow);
+  rightSholder.AddChild(&rightElbow);
+  neck.AddChild(&head);
 
-  upperArm.AddChild(&lowerArm);
-  head.AddChild(&upperArm);
+  Clock deltaTime;
+  Clock timer;
+  timer.restart();
 
-  sf::Clock deltaTime;
+
+  float bodyAngle = 5;
+  float sholdersAngle = 10;
+  float elbowAngle = -20;
+  float neckAngle = -8;
+  float headAngle = 50;
+  float timeToRotate = 2.5;
+  bool firstTime = true;
   while (window.isOpen())
-  {
-    float elaspedTime = deltaTime.restart().asSeconds();
-
-    sf::Transform transform = triangle.getTransform();
-
-    /*triangle.scale(scaleFactor, scaleFactor);
-    float currentScale = triangle.getScale().x;
-    if (currentScale >= 4.0f) {
-      scaleFactor = shrinkFactor;
-    }
-    else if (currentScale <= 1.0f)
-    {
-      scaleFactor = growthFactor;
-    }*/
-
-    sf::Event sfEvent;
-    while (window.pollEvent(sfEvent))
-    {
-      if (sfEvent.type == sf::Event::Closed)
-      {
-        window.close();
-      }
-      else if (sfEvent.type == sf::Event::KeyReleased)
-      {
-        keyHeld = false;
-      }
-      else if (sfEvent.type == sf::Event::KeyPressed)
-      {
-        keyHeld = true;
-      }
-    }
-
-    if (keyHeld)
-    {
-      float angleAmount = 90.0f;
-      lowerArmRect.rotate(angleAmount * elaspedTime);
-      upperArmRect.rotate(angleAmount * elaspedTime);
-    }
+  {  
+	  if (timer.getElapsedTime().asSeconds() >= timeToRotate) {
+		  if (firstTime) {
+			  firstTime = false;
+			  timeToRotate *= 2;
+		  }
+		  bodyAngle *= (-1);
+		  sholdersAngle *= (-1);
+		  elbowAngle *= (-1);
+		  neckAngle *=(-1);
+		 
+		  timer.restart();
+	  }
+	 float elaspedTime = deltaTime.restart().asSeconds();
+	 bodyRect.rotate(bodyAngle * elaspedTime);
+	 leftSholderRect.rotate(sholdersAngle * elaspedTime);
+	 rightSholderRect.rotate(-1 * sholdersAngle * elaspedTime);
+	 leftElbowRect.rotate( elbowAngle * elaspedTime);
+	 neckRect.rotate(neckAngle * elaspedTime);
+	 rightElbowRect.rotate(-1 * elbowAngle * elaspedTime);
 
     window.clear(); // draw fullscreen graphic
 
-    /*sf::Transform hierarchy = sf::Transform::Identity;
-
-    window.draw(triangle);
-    hierarchy = hierarchy * triangle.getTransform();
-
-    window.draw(lowerArmRect, hierarchy); // DRAWING with the triangle's transform.
-    hierarchy = hierarchy * lowerArmRect.getTransform();
-
-    window.draw(upperArmRect, hierarchy); // DRAWING*/
-
-    head.Draw(&window);
+    body.Draw(&window);
 
     window.display();
   }
